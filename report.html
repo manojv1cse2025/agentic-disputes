@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentic Purchase Dispute Evidence Engine — Case Report</title>
+<style>
+  :root {
+    --paper: #F4F6F7;
+    --paper-raised: #FFFFFF;
+    --ink: #16202A;
+    --ink-soft: #4B5A67;
+    --line: #D8DEE2;
+    --accent: #0B6E64;
+    --cleared-fg: #1B7A43; --cleared-bg: #E7F4EC;
+    --breach-fg:  #9A5B00; --breach-bg:  #FBF0DD;
+    --injected-fg:#A32B2B; --injected-bg:#FBEAEA;
+    --ambiguous-fg:#55606A; --ambiguous-bg:#EDEFF1;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    max-width: 800px; margin: 0 auto; padding: 48px 24px 90px;
+    color: var(--ink); background: var(--paper); line-height: 1.55;
+    font-size: 15px;
+  }
+  .kicker { font-size: 0.8em; color: var(--ink-soft); margin: 0 0 6px; }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2em; font-weight: 600; margin: 0 0 22px; letter-spacing: -0.01em;
+  }
+  .cover {
+    background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 4px; padding: 20px 24px; margin-bottom: 40px;
+  }
+  .cover-fields { display: grid; grid-template-columns: 140px 1fr; row-gap: 6px;
+                   font-size: 0.9em; }
+  .cover-fields dt { color: var(--ink-soft); }
+  .cover-fields dd { margin: 0; }
+
+  h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.25em; font-weight: 600; margin: 44px 0 4px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  }
+  .section-note { font-size: 0.85em; color: var(--ink-soft); margin: 0 0 18px; }
+
+  .ledger-row {
+    display: grid; grid-template-columns: 240px 1fr 56px;
+    align-items: center; column-gap: 14px; row-gap: 2px; margin: 16px 0;
+  }
+  .ledger-label { font-weight: 600; font-size: 0.92em; }
+  .ledger-track { background: #E4E7E5; border-radius: 3px; height: 20px;
+                   overflow: hidden; }
+  .ledger-fill { height: 100%; width: 0; transition: width 1.1s cubic-bezier(.2,.8,.2,1); }
+  .fill-good { background: var(--cleared-fg); }
+  .fill-mid  { background: var(--breach-fg); }
+  .fill-weak { background: var(--injected-fg); }
+  .ledger-pct {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: 0.9em; text-align: right; font-weight: 600;
+  }
+  .ledger-note { grid-column: 1 / -1; font-size: 0.78em; color: var(--ink-soft); }
+
+  .warn { background: var(--breach-bg); border: 1px solid #EBD09A;
+          padding: 10px 14px; border-radius: 4px; color: var(--breach-fg);
+          font-size: 0.88em; margin-top: 14px; }
+
+  .chips { display: flex; gap: 8px; margin: 16px 0 20px; flex-wrap: wrap; }
+  .chip {
+    font: inherit; font-size: 0.82em; padding: 5px 13px; border-radius: 20px;
+    border: 1px solid var(--line); background: var(--paper-raised);
+    color: var(--ink-soft); cursor: pointer;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 620px) { .gallery { grid-template-columns: 1fr; } }
+
+  .case {
+    display: flex; background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 6px; overflow: hidden; transition: opacity .2s, transform .2s;
+  }
+  .case.hidden { display: none; }
+  .case-tab { width: 5px; flex-shrink: 0; }
+  .tab-cleared { background: var(--cleared-fg); }
+  .tab-breach { background: var(--breach-fg); }
+  .tab-injected { background: var(--injected-fg); }
+  .tab-ambiguous { background: var(--ambiguous-fg); }
+
+  .case-body { padding: 14px 16px; flex: 1; min-width: 0; }
+  .case-head { display: flex; justify-content: space-between; align-items: baseline;
+               gap: 8px; margin-bottom: 4px; }
+  .case-id {
+    font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    font-size: 0.78em; color: var(--ink-soft);
+  }
+  .case-verdict { font-size: 0.72em; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+  .verdict-cleared { background: var(--cleared-bg); color: var(--cleared-fg); }
+  .verdict-breach { background: var(--breach-bg); color: var(--breach-fg); }
+  .verdict-injected { background: var(--injected-bg); color: var(--injected-fg); }
+  .verdict-ambiguous { background: var(--ambiguous-bg); color: var(--ambiguous-fg); }
+
+  .case-label { font-size: 0.82em; color: var(--ink-soft); margin: 0 0 10px; }
+  .case-kv { font-size: 0.82em; margin: 0 0 8px; }
+  .case-kv dt { color: var(--ink-soft); display: inline; }
+  .case-kv dd { display: inline; margin: 0 14px 0 4px; }
+
+  .findings { margin: 8px 0 0; padding-left: 16px; font-size: 0.8em; }
+  .findings li { margin-bottom: 5px; }
+  .sev { font-size: 0.72em; font-weight: 700; padding: 1px 6px; border-radius: 3px;
+         margin-right: 5px; text-transform: capitalize; }
+  .sev-critical { background: var(--injected-bg); color: var(--injected-fg); }
+  .sev-major { background: var(--breach-bg); color: var(--breach-fg); }
+  .sev-minor { background: #FBF6D8; color: #7C6300; }
+  .sev-info { background: var(--ambiguous-bg); color: var(--ambiguous-fg); }
+  .muted { color: #999; font-style: italic; }
+
+  details { margin-top: 10px; }
+  summary { cursor: pointer; font-size: 0.8em; color: var(--accent); font-weight: 600; }
+  summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .letter { font-size: 0.82em; color: var(--ink); background: var(--paper);
+            padding: 10px 12px; border-radius: 4px; margin-top: 8px;
+            border: 1px solid var(--line); }
+
+  .footer { margin-top: 64px; font-size: 0.78em; color: var(--ink-soft);
+            border-top: 1px solid var(--line); padding-top: 16px; }
+  code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+         background: var(--ambiguous-bg); padding: 1px 5px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<p class="kicker">Case report</p>
+<h1>Agentic Purchase Dispute Evidence Engine</h1>
+
+<div class="cover">
+  <dl class="cover-fields">
+    <dt>Track</dt><dd>AI Risk Manager (Track 02)</dd>
+    <dt>Event</dt><dd>Razorpay Buildathon 2026</dd>
+    <dt>Scenarios</dt><dd>60, held-out phrasing</dd>
+  </dl>
+</div>
+
+<h2>Findings summary</h2>
+<p class="section-note">Same held-out scenarios, three approaches to the one linguistic judgment the mandate rules can't answer on their own.</p>
+
+    <div class="ledger-row">
+      <div class="ledger-label">Naive baseline (keywords + cap check)</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-weak" id="bar-approach-0"
+             data-target="48.3" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">48.3%</div>
+      <div class="ledger-note">29/60 correct · 0 false blame · 16 missed injection</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">Rule engine (regex injection detection)</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-mid" id="bar-approach-1"
+             data-target="73.3" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">73.3%</div>
+      <div class="ledger-note">44/60 correct · 0 false blame · 16 missed injection</div>
+    </div>
+<p class='warn'>GEMINI_API_KEY not set — skipped. Run with --skip-llm to silence this.</p>
+
+
+
+<h2>Sample case files</h2>
+<p class="section-note">One evidence pack per case type, built the same way a merchant would receive it.</p>
+<div class="chips" id="chips"><button class="chip active" data-filter="all">All</button><button class="chip" data-filter="breach">Agent fault</button><button class="chip" data-filter="cleared">Cleared</button><button class="chip" data-filter="ambiguous">Ambiguous</button></div>
+<div class="gallery" id="gallery">
+  
+    <article class="case" data-verdict="breach">
+      <div class="case-tab tab-breach"></div>
+      <div class="case-body">
+        <div class="case-head">
+          <span class="case-id">CASE 4fb21a541d</span>
+          <span class="case-verdict verdict-breach">MANDATE_BREACH</span>
+        </div>
+        <p class="case-label">Agent operator at fault &middot; confidence 88%</p>
+        <dl class="case-kv">
+          <dt>Reason code</dt><dd>AGENT_WINDOW_CAP_EXCEEDED</dd>
+          <dt>Liable party</dt><dd>agent_operator</dd>
+        </dl>
+        <ul class="findings"><li><span class="sev sev-critical">critical</span>
+            Rs.5249 already spent in the 7-day window plus Rs.1233 = Rs.6482, against a window cap of Rs.6000. The transaction alone was within its per-order cap.</li></ul>
+        <details>
+          <summary>Explanation letter</summary>
+          <p class="letter">Transaction 5f3e4a790cec for Rs.1233 at Saravana Bhavan was placed by an authorised agent under mandate cd68520ccdc2.<br><br>The agent exceeded the authority the cardholder granted. Rs.5249 already spent in the 7-day window plus Rs.1233 = Rs.6482, against a window cap of Rs.6000. The transaction alone was within its per-order cap.. Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
+        </details>
+      </div>
+    </article>
+    <article class="case" data-verdict="cleared">
+      <div class="case-tab tab-cleared"></div>
+      <div class="case-body">
+        <div class="case-head">
+          <span class="case-id">CASE 168bd90d23</span>
+          <span class="case-verdict verdict-cleared">WITHIN_MANDATE</span>
+        </div>
+        <p class="case-label">Merchant cleared &middot; confidence 93%</p>
+        <dl class="case-kv">
+          <dt>Reason code</dt><dd>AGENT_OK_USER_REGRET</dd>
+          <dt>Liable party</dt><dd>customer</dd>
+        </dl>
+        <ul class="findings"><li class='muted'>No rule violations found.</li></ul>
+        <details>
+          <summary>Explanation letter</summary>
+          <p class="letter">Transaction 66413c3a38e6 for Rs.471 at Cafe Madras was placed by an authorised agent under mandate 602442c08961.<br><br>The mandate permitted [&#x27;food&#x27;] up to Rs.1500 per transaction. The purchase falls inside those limits on every dimension checked. The cardholder granted this authority in advance and the agent exercised it as granted.<br><br>Recommend contesting. Authority is documented and was not exceeded.</p>
+        </details>
+      </div>
+    </article>
+    <article class="case" data-verdict="ambiguous">
+      <div class="case-tab tab-ambiguous"></div>
+      <div class="case-body">
+        <div class="case-head">
+          <span class="case-id">CASE 15411e1370</span>
+          <span class="case-verdict verdict-ambiguous">AMBIGUOUS</span>
+        </div>
+        <p class="case-label">Flagged for human review &middot; confidence 80%</p>
+        <dl class="case-kv">
+          <dt>Reason code</dt><dd>AGENT_SCOPE_UNDEFINED</dd>
+          <dt>Liable party</dt><dd>undetermined</dd>
+        </dl>
+        <ul class="findings"><li><span class="sev sev-major">major</span>
+            no numeric limit was set. Mandate text was &quot;order dinner when I&#x27;m working late, something reasonable&quot;. Whether Rs.2437 was authorised cannot be established from the record.</li></ul>
+        <details>
+          <summary>Explanation letter</summary>
+          <p class="letter">Transaction 4ec22668517f for Rs.2437 at Saravana Bhavan was placed by an authorised agent under mandate 5f6974435305.<br><br>Mandate set no numeric limit. Whether the amount was authorised cannot be settled from evidence. The record is complete but does not contain the fact needed to settle the question. No automated attribution is offered.<br><br>Recommend manual review. Automated attribution withheld.</p>
+        </details>
+      </div>
+    </article>
+    <article class="case" data-verdict="breach">
+      <div class="case-tab tab-breach"></div>
+      <div class="case-body">
+        <div class="case-head">
+          <span class="case-id">CASE 232c712155</span>
+          <span class="case-verdict verdict-breach">MANDATE_BREACH</span>
+        </div>
+        <p class="case-label">Agent operator at fault &middot; confidence 95%</p>
+        <dl class="case-kv">
+          <dt>Reason code</dt><dd>AGENT_CAP_EXCEEDED</dd>
+          <dt>Liable party</dt><dd>agent_operator</dd>
+        </dl>
+        <ul class="findings"><li><span class="sev sev-critical">critical</span>
+            Rs.3295 against a per-transaction cap of Rs.1500 (over by Rs.1795)</li></ul>
+        <details>
+          <summary>Explanation letter</summary>
+          <p class="letter">Transaction 87093816014e for Rs.3295 at Cafe Madras was placed by an authorised agent under mandate aa9d4104c08c.<br><br>The agent exceeded the authority the cardholder granted. Rs.3295 against a per-transaction cap of Rs.1500 (over by Rs.1795). Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
+        </details>
+      </div>
+    </article>
+    <article class="case" data-verdict="cleared">
+      <div class="case-tab tab-cleared"></div>
+      <div class="case-body">
+        <div class="case-head">
+          <span class="case-id">CASE d8608d581d</span>
+          <span class="case-verdict verdict-cleared">WITHIN_MANDATE</span>
+        </div>
+        <p class="case-label">Merchant cleared &middot; confidence 93%</p>
+        <dl class="case-kv">
+          <dt>Reason code</dt><dd>AGENT_OK_USER_REGRET</dd>
+          <dt>Liable party</dt><dd>customer</dd>
+        </dl>
+        <ul class="findings"><li class='muted'>No rule violations found.</li></ul>
+        <details>
+          <summary>Explanation letter</summary>
+          <p class="letter">Transaction 94b12ab14c2c for Rs.708 at Anjappar was placed by an authorised agent under mandate 1e4a840910bb.<br><br>The mandate permitted [&#x27;food&#x27;] up to Rs.1500 per transaction. The purchase falls inside those limits on every dimension checked. The cardholder granted this authority in advance and the agent exercised it as granted.<br><br>Recommend contesting. Authority is documented and was not exceeded.</p>
+        </details>
+      </div>
+    </article>
+    <article class="case" data-verdict="breach">
+      <div class="case-tab tab-breach"></div>
+      <div class="case-body">
+        <div class="case-head">
+          <span class="case-id">CASE 7e56e6c0d1</span>
+          <span class="case-verdict verdict-breach">MANDATE_BREACH</span>
+        </div>
+        <p class="case-label">Agent operator at fault &middot; confidence 95%</p>
+        <dl class="case-kv">
+          <dt>Reason code</dt><dd>AGENT_CAP_EXCEEDED</dd>
+          <dt>Liable party</dt><dd>agent_operator</dd>
+        </dl>
+        <ul class="findings"><li><span class="sev sev-critical">critical</span>
+            Rs.4068 against a per-transaction cap of Rs.1500 (over by Rs.2568)</li></ul>
+        <details>
+          <summary>Explanation letter</summary>
+          <p class="letter">Transaction f88d813b4249 for Rs.4068 at Anjappar was placed by an authorised agent under mandate 3dcddeca4e20.<br><br>The agent exceeded the authority the cardholder granted. Rs.4068 against a per-transaction cap of Rs.1500 (over by Rs.2568). Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
+        </details>
+      </div>
+    </article>
+</div>
+
+<div class="footer">
+  Generated by <code>report.py</code> — a static file, no server, no live
+  API calls beyond what was already cached.
+</div>
+
+<script>
+(function() {
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fills = document.querySelectorAll('.ledger-fill');
+  function paint() {
+    fills.forEach(function(el) {
+      el.style.width = el.getAttribute('data-target') + '%';
+    });
+  }
+  if (reduceMotion) {
+    paint();
+  } else {
+    requestAnimationFrame(function() { requestAnimationFrame(paint); });
+  }
+
+  var chips = document.querySelectorAll('.chip');
+  var cases = document.querySelectorAll('.case');
+  chips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      chips.forEach(function(c) { c.classList.remove('active'); c.setAttribute('aria-pressed', 'false'); });
+      chip.classList.add('active');
+      chip.setAttribute('aria-pressed', 'true');
+      var filter = chip.getAttribute('data-filter');
+      cases.forEach(function(c) {
+        var show = filter === 'all' || c.getAttribute('data-verdict') === filter;
+        c.classList.toggle('hidden', !show);
+      });
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
