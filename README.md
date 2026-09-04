@@ -1,132 +1,147 @@
-# ADC OSCE Simulator — Starter (Frontend + Backend, no AI yet)
+# Agentic Purchase Dispute Evidence Engine
 
-This is a fully working local app: signup/login, a case bank, session start/end,
-Stripe subscription checkout, and a session page — with the AI layer stubbed out
-in exactly one file so you can plug it in later without touching anything else.
+**Track:** AI Risk Manager — Razorpay Buildathon 2026
 
-## Folder structure
+## The problem, in one example
 
-```
-adc-osce-app/
-  backend/
-    .env.example
-    package.json
-    src/
-      server.js              # Express entrypoint
-      store.js                # in-memory DB (swap for Postgres later)
-      middleware/
-        auth.js               # JWT auth check
-      routes/
-        auth.js               # signup/login
-        cases.js               # list/get cases
-        sessions.js            # start/end session, get feedback
-        payments.js            # Stripe checkout + webhook
-      services/
-        aiService.js           # <-- THE ONLY FILE YOU REWRITE FOR PHASE 2
-      data/
-        cases.json             # your case bank (structured, matches earlier schema)
-  frontend/
-    .env.local.example
-    package.json
-    next.config.js
-    lib/
-      api.js                  # fetch helper (adds JWT, handles errors)
-    pages/
-      _app.js
-      index.js                # login/signup
-      dashboard.js            # case list, start case, upgrade subscription
-      session/
-        [caseId].js           # session page (AI mounts here in Phase 2)
-    styles/
-      globals.css
-```
+Priya sets up an AI assistant: *"order dinner when I'm working late, under
+Rs.1,500, food only."* She sets this once and forgets about it.
 
-## 1. Run the backend
+Weeks later a Rs.4,200 charge appears. She doesn't recognise it and tells her
+bank she never made this payment. The bank opens a dispute. The merchant now
+has to prove the purchase was legitimate, or they lose the money automatically.
+
+Normally that proof is easy: IP address, device fingerprint, click path, time
+on site. All of it assumes a *human* browsed and clicked. Here, an agent
+decided. That evidence doesn't exist, and disputes involving AI buyers have no
+way to be defended.
+
+## The gap this fills
+
+Razorpay's dispute API already accepts evidence types for exactly this
+situation: `shipping_proof`, `billing_proof`, `proof_of_service`,
+`customer_communication`, `access_activity_log`, `refund_cancellation_policy`,
+and so on. Every one of them answers a single question — **did the merchant
+deliver what was ordered?**
+
+None of them answer the question an agent-made purchase actually raises:
+**was the buyer authorised to order it?** When an agent overspends its budget
+or gets manipulated by planted content, the merchant delivered exactly what
+was asked for. Every existing evidence field says "yes, delivered." The
+dispute isn't about delivery, it's about authority, and there's no field for
+that.
+
+This project is that missing evidence type: given a mandate (what the user
+authorised), a transaction, and the record of what the agent read and decided,
+produce a verdict — who is actually at fault — with evidence a merchant could
+submit.
+
+## Four possible verdicts
+
+| Verdict | Meaning | Who's liable |
+|---|---|---|
+| `WITHIN_MANDATE` | Agent stayed inside its authority | Customer (regret, not fraud) |
+| `MANDATE_BREACH` | Agent exceeded cap, category, or expiry | Agent operator |
+| `INJECTED` | Merchant content instructed the agent and it complied | Merchant / third party |
+| `AMBIGUOUS` | Genuinely undecidable from the record | Flagged for human review |
+
+## How it works
+
+- **`generator.py`** — builds labelled synthetic disputes. Ten scenario types,
+  including deliberately hard ones: a charge that's fine alone but breaks the
+  weekly cap, injected text disguised as ordinary menu copy, injected text the
+  agent *saw but ignored*, and cases with no clean answer at all.
+- **`classify.py`** — the engine. Mandate checks (expiry, per-transaction cap,
+  cumulative window cap, category) are pure deterministic rules — a cap breach
+  is arithmetic, not a judgment call. Content analysis checks two things
+  separately: did merchant content address an automated buyer with a
+  directive, and did the agent's own reasoning show it acted on that
+  directive. Only both together produce `INJECTED`. Output is a full evidence
+  pack: findings, spend breakdown, content analysis, confidence, and an
+  auto-drafted explanation letter.
+- **`score.py`** — scores any classifier against the labelled set. Reports
+  accuracy, a confusion matrix, and two costed error types: **false blame**
+  (an innocent merchant blamed for manipulation) and **missed injection** (a
+  real manipulation not caught).
+
+## Run it
 
 ```bash
-cd backend
-cp .env.example .env
-# open .env and set JWT_SECRET to any random string
-# (Stripe keys can stay as placeholders until you want to test payments)
-npm install
-npm run dev
+python generator.py    # builds scenarios.json, prints label distribution
+python score.py         # scores the naive keyword baseline
+python classify.py      # prints sample evidence packs
 ```
 
-Backend runs at `http://localhost:4000`. Check it's alive:
-```bash
-curl http://localhost:4000/api/health
-```
-
-## 2. Run the frontend
-
-In a second terminal:
+The regex-vs-baseline comparison, scored on a **held-out set using injection
+phrasing neither classifier was written against**:
 
 ```bash
-cd frontend
-cp .env.local.example .env.local
-npm install
-npm run dev
+python -c "from generator import generate; from score import evaluate, naive_baseline; from classify import classify; evaluate(generate(200, held_out=True), naive_baseline, 'baseline'); evaluate(generate(200, held_out=True), classify, 'rule engine')"
 ```
 
-Frontend runs at `http://localhost:3000`.
+The LLM-based injection detector needs a Gemini API key (free tier, no card
+-- see the setup note at the top of `gemini_classify.py`):
 
-## 3. Try the full flow
+```bash
+set GEMINI_API_KEY=your-key-here      # Windows cmd
+python run_llm_eval.py --n 60         # runs all three approaches side by side
+```
 
-1. Open `http://localhost:3000`
-2. Sign up with any email/password
-3. You'll land on the dashboard and see the one seeded case (`case-001`)
-4. Click "Start case" → goes to the session page (AI area shows a placeholder box)
-5. Click "End case & get feedback" → returns a stub feedback report
+## Results (n=60, held-out phrasing)
 
-Everything — auth, routing, case gating, session lifecycle, Stripe checkout —
-is real and working. Only the AI conversation itself is stubbed.
+Three approaches, same held-out scenarios, same scoring:
 
-## 4. Setting up real Stripe payments (optional right now)
+| | Accuracy | False blame | Notes |
+|---|---|---|---|
+| Naive baseline (keywords + cap check) | 46.0% | 0 | fails every hard case type |
+| Rule engine, regex injection detection | 73.0% | 0 | mandate rules perfect, injection detection collapses to 0% on unseen phrasing |
+| Rule engine, LLM injection detection | **91.7%** | **0** | mandate rules perfect, injection detection generalises to phrasing it was never tuned on |
 
-1. Create a Stripe account, switch to test mode
-2. Create a Product + recurring Price, copy its ID into `STRIPE_PRICE_ID_MONTHLY`
-3. Copy your test secret key into `STRIPE_SECRET_KEY`
-4. For webhooks locally, install the Stripe CLI and run:
-   ```bash
-   stripe listen --forward-to localhost:4000/api/payments/webhook
-   ```
-   Copy the printed webhook signing secret into `STRIPE_WEBHOOK_SECRET`
-5. Click "Upgrade subscription" on the dashboard — it'll redirect to a real Stripe Checkout page
+Every mandate-rule case type — cap, window, category, expiry — scores **100%**
+on held-out data in all three versions, because those are deterministic
+arithmetic and don't need a model. The difference between the rows is
+entirely in the one genuinely linguistic judgment: whether a piece of
+merchant content is instructing an automated buyer, and whether the agent
+complied.
 
-## 5. Adding your own cases
+The regex version was tuned against specific phrasing and scored 100% on
+that phrasing, then collapsed to 0% the moment the same attacks were
+reworded (see `generate(n, held_out=True)` in `generator.py`). That gap is
+the actual finding of this project, not a footnote: pattern-matching on
+vocabulary doesn't generalise, and the LLM version, given the same two
+questions, does.
 
-Edit `backend/src/data/cases.json`. Each case needs:
-- `patientProfile` — what the student sees before/during the case
-- `historyFacts` — facts the AI patient can reveal when asked (Phase 2 will gate these behind tool calls)
-- `examFindings` — same idea for clinical findings
-- `rubricItems` — what a "good" answer covers, used for scoring
+The one honest weak spot in the best version: `injection_followed` (blatant,
+obvious manipulation attempts) scores 56% (5/9), lower than `subtle_injection`
+(86%) or `injection_ignored` (100%). **Crucially, every one of those 5 misses
+fails safe** — they're classified as `MANDATE_BREACH` rather than
+`WITHIN_MANDATE`, so the agent operator is still held liable and no innocent
+merchant is ever blamed. False blame is 0 across all 60 scenarios and all
+three approaches. That's the metric that actually matters for a dispute
+system: an evidence engine that's occasionally too cautious about *why* a
+charge was wrong is far safer than one that's ever wrong about *who* to
+blame.
 
-This structure is intentionally the same one discussed earlier for the LLM
-tool-calling design — you're already building your content in the right shape.
+**Both the regex and LLM numbers are reported, not just the better one**,
+because a classifier that's only ever checked against the phrasing it was
+tuned on is measuring nothing.
 
-## 6. Where the AI layer plugs in later (Phase 2)
+## What's deliberately not here
 
-**Backend:** `backend/src/services/aiService.js` has three stub functions:
-- `startAiSession()` — currently returns a mock message. Later: spins up a
-  LiveKit room + starts your agent worker (STT → Claude with tool-calling → TTS → avatar),
-  returns real connection details (room name, LiveKit token/URL).
-- `recordRubricHit()` — currently just logs. Later: called by the agent worker
-  whenever the student triggers a rubric item during conversation.
-- `generateFeedbackReport()` — currently returns a stub report. Later: sends
-  the transcript + rubric to Claude for narrative feedback, combined with the
-  deterministic rubric-hit log.
+No dashboard, no live Razorpay API integration, no database, no auth. The
+brief asks for a measured match rate and an honest exception list on
+synthetic data — that's the entire scope, and every hour spent past that is
+an hour not spent making the numbers real.
 
-Nothing else in the app needs to change — `routes/sessions.js` already calls
-these functions and passes their output straight to the frontend.
+## Files
 
-**Frontend:** `frontend/pages/session/[caseId].js` has a clearly marked black
-box — that's where you'll mount the LiveKit React SDK video/audio room component
-once Phase 2 is ready. The rest of the page (case info, end-case button,
-feedback display) is already wired to real backend data.
-
-## 7. Suggested next step
-
-Get comfortable with this flow, add a few more cases to `cases.json`, then
-when ready for Phase 2: set up a LiveKit Cloud account, build the Python
-agent worker (STT/LLM/TTS/avatar pipeline with tool-calling), and fill in
-the three functions in `aiService.js`.
+- `generator.py` — builds labelled synthetic disputes, including a held-out
+  mode with injection phrasing no classifier here was tuned against
+- `classify.py` — the rule-based engine: deterministic mandate checks plus
+  a regex content analyser, full evidence packs, explanation letters
+- `score.py` — scoring harness: accuracy, confusion matrix, false blame,
+  missed injection, per-case-type breakdown
+- `gemini_classify.py` — swaps the regex content analyser for a real LLM
+  call (Google Gemini, free tier), same interface, mandate rules untouched
+- `run_llm_eval.py` — runs baseline, regex, and LLM versions side by side
+  on the same held-out set
