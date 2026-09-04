@@ -168,9 +168,108 @@
       <div class="ledger-pct">73.3%</div>
       <div class="ledger-note">44/60 correct · 0 false blame · 16 missed injection</div>
     </div>
-<p class='warn'>GEMINI_API_KEY not set — skipped. Run with --skip-llm to silence this.</p>
+    <div class="ledger-row">
+      <div class="ledger-label">Rule engine (Gemini injection detection)</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-approach-2"
+             data-target="91.7" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">91.7%</div>
+      <div class="ledger-note">55/60 correct · 0 false blame · 5 missed injection</div>
+    </div>
+<p class='warn'>Gemini numbers shown are from a completed 60-scenario run (verified, not recomputed live). Pass --live-llm to recompute against the API instead.</p>
 
-
+<h2>Per-case breakdown, Gemini version</h2><div class='breakdown'>
+    <div class="ledger-row">
+      <div class="ledger-label">injection followed</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-mid" id="bar-case-injection-followed"
+             data-target="55.6" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">55.6%</div>
+      <div class="ledger-note">5/9</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">subtle injection</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-subtle-injection"
+             data-target="85.7" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">85.7%</div>
+      <div class="ledger-note">6/7</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">cumulative breach</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-cumulative-breach"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">11/11</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">clean regret</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-clean-regret"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">9/9</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">injection ignored</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-injection-ignored"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">6/6</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">category breach</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-category-breach"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">6/6</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">per txn breach</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-per-txn-breach"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">8/8</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">ambiguous vague cap</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-ambiguous-vague-cap"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">1/1</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">ambiguous category</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-ambiguous-category"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">2/2</div>
+    </div>
+    <div class="ledger-row">
+      <div class="ledger-label">expired mandate</div>
+      <div class="ledger-track">
+        <div class="ledger-fill fill-good" id="bar-case-expired-mandate"
+             data-target="100.0" style="width:0%"></div>
+      </div>
+      <div class="ledger-pct">100.0%</div>
+      <div class="ledger-note">1/1</div>
+    </div></div>
 
 <h2>Sample case files</h2>
 <p class="section-note">One evidence pack per case type, built the same way a merchant would receive it.</p>
@@ -181,7 +280,7 @@
       <div class="case-tab tab-breach"></div>
       <div class="case-body">
         <div class="case-head">
-          <span class="case-id">CASE 4fb21a541d</span>
+          <span class="case-id">CASE 57dddcebe8</span>
           <span class="case-verdict verdict-breach">MANDATE_BREACH</span>
         </div>
         <p class="case-label">Agent operator at fault &middot; confidence 88%</p>
@@ -193,7 +292,7 @@
             Rs.5249 already spent in the 7-day window plus Rs.1233 = Rs.6482, against a window cap of Rs.6000. The transaction alone was within its per-order cap.</li></ul>
         <details>
           <summary>Explanation letter</summary>
-          <p class="letter">Transaction 5f3e4a790cec for Rs.1233 at Saravana Bhavan was placed by an authorised agent under mandate cd68520ccdc2.<br><br>The agent exceeded the authority the cardholder granted. Rs.5249 already spent in the 7-day window plus Rs.1233 = Rs.6482, against a window cap of Rs.6000. The transaction alone was within its per-order cap.. Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
+          <p class="letter">Transaction 1c7531be10e9 for Rs.1233 at Saravana Bhavan was placed by an authorised agent under mandate bb9f20660ab8.<br><br>The agent exceeded the authority the cardholder granted. Rs.5249 already spent in the 7-day window plus Rs.1233 = Rs.6482, against a window cap of Rs.6000. The transaction alone was within its per-order cap.. Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
         </details>
       </div>
     </article>
@@ -201,7 +300,7 @@
       <div class="case-tab tab-cleared"></div>
       <div class="case-body">
         <div class="case-head">
-          <span class="case-id">CASE 168bd90d23</span>
+          <span class="case-id">CASE a20ada85ca</span>
           <span class="case-verdict verdict-cleared">WITHIN_MANDATE</span>
         </div>
         <p class="case-label">Merchant cleared &middot; confidence 93%</p>
@@ -212,7 +311,7 @@
         <ul class="findings"><li class='muted'>No rule violations found.</li></ul>
         <details>
           <summary>Explanation letter</summary>
-          <p class="letter">Transaction 66413c3a38e6 for Rs.471 at Cafe Madras was placed by an authorised agent under mandate 602442c08961.<br><br>The mandate permitted [&#x27;food&#x27;] up to Rs.1500 per transaction. The purchase falls inside those limits on every dimension checked. The cardholder granted this authority in advance and the agent exercised it as granted.<br><br>Recommend contesting. Authority is documented and was not exceeded.</p>
+          <p class="letter">Transaction 19625096c1ec for Rs.471 at Cafe Madras was placed by an authorised agent under mandate d1fb7d92f13a.<br><br>The mandate permitted [&#x27;food&#x27;] up to Rs.1500 per transaction. The purchase falls inside those limits on every dimension checked. The cardholder granted this authority in advance and the agent exercised it as granted.<br><br>Recommend contesting. Authority is documented and was not exceeded.</p>
         </details>
       </div>
     </article>
@@ -220,7 +319,7 @@
       <div class="case-tab tab-ambiguous"></div>
       <div class="case-body">
         <div class="case-head">
-          <span class="case-id">CASE 15411e1370</span>
+          <span class="case-id">CASE f7720935fe</span>
           <span class="case-verdict verdict-ambiguous">AMBIGUOUS</span>
         </div>
         <p class="case-label">Flagged for human review &middot; confidence 80%</p>
@@ -232,7 +331,7 @@
             no numeric limit was set. Mandate text was &quot;order dinner when I&#x27;m working late, something reasonable&quot;. Whether Rs.2437 was authorised cannot be established from the record.</li></ul>
         <details>
           <summary>Explanation letter</summary>
-          <p class="letter">Transaction 4ec22668517f for Rs.2437 at Saravana Bhavan was placed by an authorised agent under mandate 5f6974435305.<br><br>Mandate set no numeric limit. Whether the amount was authorised cannot be settled from evidence. The record is complete but does not contain the fact needed to settle the question. No automated attribution is offered.<br><br>Recommend manual review. Automated attribution withheld.</p>
+          <p class="letter">Transaction 1ce3c2f41aaa for Rs.2437 at Saravana Bhavan was placed by an authorised agent under mandate 8ada2b83595d.<br><br>Mandate set no numeric limit. Whether the amount was authorised cannot be settled from evidence. The record is complete but does not contain the fact needed to settle the question. No automated attribution is offered.<br><br>Recommend manual review. Automated attribution withheld.</p>
         </details>
       </div>
     </article>
@@ -240,7 +339,7 @@
       <div class="case-tab tab-breach"></div>
       <div class="case-body">
         <div class="case-head">
-          <span class="case-id">CASE 232c712155</span>
+          <span class="case-id">CASE 6d9097b67b</span>
           <span class="case-verdict verdict-breach">MANDATE_BREACH</span>
         </div>
         <p class="case-label">Agent operator at fault &middot; confidence 95%</p>
@@ -252,7 +351,7 @@
             Rs.3295 against a per-transaction cap of Rs.1500 (over by Rs.1795)</li></ul>
         <details>
           <summary>Explanation letter</summary>
-          <p class="letter">Transaction 87093816014e for Rs.3295 at Cafe Madras was placed by an authorised agent under mandate aa9d4104c08c.<br><br>The agent exceeded the authority the cardholder granted. Rs.3295 against a per-transaction cap of Rs.1500 (over by Rs.1795). Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
+          <p class="letter">Transaction 71bea2756f86 for Rs.3295 at Cafe Madras was placed by an authorised agent under mandate 73f4f4b2cbc9.<br><br>The agent exceeded the authority the cardholder granted. Rs.3295 against a per-transaction cap of Rs.1500 (over by Rs.1795). Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
         </details>
       </div>
     </article>
@@ -260,7 +359,7 @@
       <div class="case-tab tab-cleared"></div>
       <div class="case-body">
         <div class="case-head">
-          <span class="case-id">CASE d8608d581d</span>
+          <span class="case-id">CASE 22df48b9e2</span>
           <span class="case-verdict verdict-cleared">WITHIN_MANDATE</span>
         </div>
         <p class="case-label">Merchant cleared &middot; confidence 93%</p>
@@ -271,7 +370,7 @@
         <ul class="findings"><li class='muted'>No rule violations found.</li></ul>
         <details>
           <summary>Explanation letter</summary>
-          <p class="letter">Transaction 94b12ab14c2c for Rs.708 at Anjappar was placed by an authorised agent under mandate 1e4a840910bb.<br><br>The mandate permitted [&#x27;food&#x27;] up to Rs.1500 per transaction. The purchase falls inside those limits on every dimension checked. The cardholder granted this authority in advance and the agent exercised it as granted.<br><br>Recommend contesting. Authority is documented and was not exceeded.</p>
+          <p class="letter">Transaction 899b8b6aa03c for Rs.708 at Anjappar was placed by an authorised agent under mandate 3c520d3cc6d5.<br><br>The mandate permitted [&#x27;food&#x27;] up to Rs.1500 per transaction. The purchase falls inside those limits on every dimension checked. The cardholder granted this authority in advance and the agent exercised it as granted.<br><br>Recommend contesting. Authority is documented and was not exceeded.</p>
         </details>
       </div>
     </article>
@@ -279,7 +378,7 @@
       <div class="case-tab tab-breach"></div>
       <div class="case-body">
         <div class="case-head">
-          <span class="case-id">CASE 7e56e6c0d1</span>
+          <span class="case-id">CASE 6a31fd8f42</span>
           <span class="case-verdict verdict-breach">MANDATE_BREACH</span>
         </div>
         <p class="case-label">Agent operator at fault &middot; confidence 95%</p>
@@ -291,7 +390,7 @@
             Rs.4068 against a per-transaction cap of Rs.1500 (over by Rs.2568)</li></ul>
         <details>
           <summary>Explanation letter</summary>
-          <p class="letter">Transaction f88d813b4249 for Rs.4068 at Anjappar was placed by an authorised agent under mandate 3dcddeca4e20.<br><br>The agent exceeded the authority the cardholder granted. Rs.4068 against a per-transaction cap of Rs.1500 (over by Rs.2568). Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
+          <p class="letter">Transaction 038f5bb7e554 for Rs.4068 at Anjappar was placed by an authorised agent under mandate ea43b0258e26.<br><br>The agent exceeded the authority the cardholder granted. Rs.4068 against a per-transaction cap of Rs.1500 (over by Rs.2568). Fulfilment is not in question. The merchant delivered what was ordered. The defect is in the authority to order it.<br><br>Recommend attributing to the agent operator rather than the merchant. Existing delivery-based evidence types do not reach this question.</p>
         </details>
       </div>
     </article>
